@@ -1,0 +1,31 @@
+class Main
+{
+    function void main()
+    {
+    var int input;
+
+    var DP count;
+    var DP total;
+    var DP inputDP;
+    var DP averageDP;
+    var DP one;
+
+    let one = DP.new(1);
+    let total = DP.new(0) ;
+    let count = DP.new (0) ;
+    let inputDP = DP.new(0) ;
+    let averageDP = DP.new (0) ;
+    let input = Unix.readInt("");
+    while ( ~ (input = 0) )
+    {
+        let inputDP = DP.new (input) ;
+        do DP.add (total, inputDP, total) ;
+        do DP.add (count,one, count);
+        let input = Unix.readInt("");
+    }
+    do DP.divide (averageDP, total, count);
+    do Unix.printString( DP.toString(averageDP) );
+    do Unix.println();
+    return;
+    }
+}
