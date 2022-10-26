@@ -1,0 +1,73 @@
+Workshop 02 Preparation Task
+Notes:
+
+the preparation marks are shown by the associated "Workshop 02 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop02 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop 02 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and then commit the files to svn:
+% make install
+Goto the Web Submission System and make a submission to the "Workshop 02 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 02 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 02 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+Adders
+The first steps focus on building half and full adder chips.
+
+Change directory to the working copy of the workshop02 directory.
+Write HDL code for a HalfAdder chip and test it:
+% make
+Write HDL code for a FullAdder chip and test it:
+% make
+Commit the changes to your svn repository:
+% svn commit -m workshop02-activity
+Goto the Web Submission System and make a submission to the "Workshop 02 - Submit Here" assignment. A successful submission that passes the HalfAdder and FullAdder tests will complete the workshop activity.
+Workshop 02 Project
+You are expected to know what all the chips do and how to implement them. They are the building blocks we will use to construct the Hack processor. This workshop provides an opportunity to receive an additional 5 participation marks by completing the entire workshop. If you get stuck on hdl consult the Hardware Simulator Tutorial or the HDL Survival Guide on the nand2tetris website.
+
+Notes:
+
+all submissions to the "Workshop 02 - Submit Here" assignment will receive up to 5 additional participation marks for submissions by the project due date
+the additional project marks are shown by the associated "Workshop 02 - Project" assignment
+the files to be edited are in the workshop02/ALU sub-directory but make must be run in the workshop02 directory
+in example commands % is the shell's prompt, it is not part of the command
+ALU
+The next steps just focus on constructing the ALU using builtin versions of all of the components required. We placed copies of the files we want to work with in the sub-directory ALU. These will be the only chips in the new directory so the Hardware Simulator will automatically use working builtin versions of any other chips we need.
+
+The remaining steps require you to edit the ALU/ALU.hdl file and write HDL code to generate the correct 16-bit output of an ALU chip.
+
+You should use the And16, Add16, Not16 and Mux16 chips.
+
+The ALU takes two 16 bit inputs, x and y, and produces a 16 bit output, out. In addition the zr output is 0 if the 16 bit output is 0 or 1 otherwise. The ng output is 1 if the 16 bit output is a negative number or 0 otherwise. There are six control inputs zx, nx, zy, ny, f and no, that control how x and y are transformed to produce out. The file ALU.hdl contains a description of what effect each control has on the output.
+
+workshop-02-alu.png
+
+Change directory to the working copy of the workshop02 directory.
+Start by running the ALU tests to see what happens. There are two test scripts, ALU/ALU-nostat.tst and ALU/ALU.tst. The ALU/ALU-nostat.tst script runs the same tests as ALU/ALU.tst but does not check the zr and ng outputs:
+% make
+Start by adding the x and y inputs together and connecting the result to out. To do this you must use the Add16 chip.
+Now that you can add two numbers together, use the And16 chip to produce a bitwise and of x and y and then use a Mux16 chip to connect either the Add16 or And16 to out. The control input f should be used as the selector input to the Mux16 chip. If f is a 1 the result of the Add16 should connected to out otherwise the result of the And16 should be connected to out.
+In the previous step we used the Mux16 to choose between two 16 bit inputs. In this step we want to implement a choice between the output of the previous step or the bitwise not of the previous step. To achieve this add a new Mux16 which has its output connected to out. One of its inputs should be the output from the previous step. The other input is produced by connecting the output of the previous step to a Not16 chip which flips all the bits. If no is 1 the new Mux16 chooses the output from the Not16 gate.
+We can repeat the previous step to implement the bitwise not controls nx and ny. In each case we feed the x or y to a new Mux16 chip and also to a Not16 chip then use the nx or ny control as a selector.
+The final steps are to implement the zx and zy controls. These controls should be applied before the nx and ny controls. In these cases we need to produce a 0 or the original x or y. To obtain a 0 we use the keyword false as one the inputs to a new Mux16 chip.
+At this stage you should be able to pass all of the tests run by ALU/ALU-nostat.tst.
+
+% make
+Write HDL code to generate the correct status outputs, zr and ng, for an ALU.
+You will need to use the following additional chips to achieve this, Not, Or and Or8Way. The Or8Way chip allows you to do a bitwise or operation across 8 inputs at once. It produces a 0 if all of its inputs are 0. 
+Note: you need to direct the output of the final Mux16 to 4 different wires of different widths. You can do this by replacing out=out with:
+
+out=out, out[15]=ng, out[0..7]=or8a ,out[8..15]=or8b
+The final ALU should look something like this:
+ALU-Logic.png
+At this stage you should be able to pass all of the tests run by ALU/ALU.tst.
+
+% make
+Commit the changes to your svn repository, this can be done after any earlier step:
+% svn commit -m workshop02-activity
+Goto the Web Submission System and make a submission to the "Workshop 02 - Submit Here" assignment, this can be done after any earlier commit.
+** Important **  a key thing to note about the ALU that you have constructed - it is always performing an add operation and an and operation even if the results of one or other operation is not required.
