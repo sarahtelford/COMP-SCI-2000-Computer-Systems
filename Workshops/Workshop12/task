@@ -1,0 +1,85 @@
+Workshop 12 - Caching
+Caching
+Overview
+Caching can have a dramatic effect on the performance of computing systems both positively and negatively. The aim of this workshop is to demonstrate this using the very small program presented in lectures. Performance optimisation should not be the primary focus of your programming but it is very important that you appreciate the potential effect of cache behaviours. Fortunately, most programs exhibit reasonable temporal and spatial locality so they will work well with the available caches. However, if you do encounter significant performance issues with a program you will now be better prepared to address them.
+
+Weighting and Due Dates
+Available participation marks:
+week 12: 4 (preparation 2, activity 2)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 12
+Activity: 11:55pm Friday of week 12
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 12 Background Reading
+Before attending the workshop you should re-read the lecture on caching and review the code in the startup files attached below.
+
+Workshop 12 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 12 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop12 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop 12 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and commit them to svn:
+% make install
+Goto the Web Submission System and make a submission to the "Workshop12 - Submit Here"assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 12 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 12 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+After completing each part of the following activity, commit your changes to svn:
+
+% svn commit -m workshop12-activity
+After each commit, go to the Web Submission System and make a submission to the "Workshop12 - Submit Here" assignment. A successful submission that passes the results.csv and summary.txt tests will complete the workshop activity.
+
+Part 1 - Compile and run the startup programs
+The zip file attached below contains two versions of the loop discussed in lectures, one in C++ and the other in php. Download the programs, compile them and check that they run.
+
+% make
+% ./loop-O0
+usage: loop <data length> <number of iterations> asc|dsc|random
+there must be 3 parameters
+Part 2 - Experiment with different data sizes
+The php program is interpreted and runs much much slower than the C++ program. The C++ program is complied into different executables with varying levels of optimisation, level 0 up to level 3. You can look at the assembler produced by the C++ compiler if you want an idea of how different these are.
+
+To make measuring the programs easier, we have provided a bash script, measure.bash, that will run each of the programs with different parameters and output the results in .csv format. The script will attempt to discover detailed information about your CPU such as the sizes of the different instruction and data caches.
+
+Try running each version of the program with different sized input parameters and see how long they take to run. In adjusting the parameters you should aim to have the programs run for at least 1 to 2 seconds so that any timing errors are minimised. Which programs exhibit the greatest variations in running time? Can you explain why?
+
+Part 3 - Record your results
+Replace the contents of the file, results.csv, with the results of your experiments. Your table should have one set of entries for each of the four executable programs, loop.php, loop-O0, loop-O1 and loop-O3.
+
+For each of your programs you should have one set of entries for a chosen set of data sizes. Remember that an int is a 4-byte value in our C++ systems so multiply the array size by 4 to get the data size in bytes. The php system may use 4-byte integers or it may use 8-byte integers. You should choose sizes that will and will not fit into different sizes of CPU cache. For example, many CPUs have a level-1 cache of up to 32KB, a level-2 cache of up to 256KB and a level-3 cache of a few megabytes.
+
+For a particular program and data size you should record three sets of results in millions of reads per second for access in ascending order, descending order and random order.
+
+You results.csv file must look like this but should have a lot, lot more lines of results and the results will be different. This example has had lots of lines deleted so it is incomplete.
+
+Program,Iterations,Size,Direction,Time,Million Reads / Second,Hostname,CPU,Cores/Threads,L1i Cache,L1d Cache,L2 Cache,L3 Cache,Memory
+php loop.php,40000,1024,asc,1.42,29,foyers.local,Apple processor,8c/8t,128KB,64KB,4MB,,8GB
+php loop.php,40000,1024,random,1.41,29,foyers.local,Apple processor,8c/8t,128KB,64KB,4MB,,8GB
+php loop.php,10000,4096,dsc,1.22,34,eagle,Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz,6c/6t,192KB,192KB,1536KB,9MB,32052MB
+php loop.php,10000,4096,random,1.22,34,eagle,Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz,6c/6t,192KB,192KB,1536KB,9MB,32052MB
+lib/macos/loop-O0,30,16777216,dsc,1.06925,470,skyfall.local,Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz,4/8,32KB,32KB,256KB,8MB,24GB
+lib/macos/loop-O0,30,16777216,random,7.02529,71,skyfall.local,Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz,4/8,32KB,32KB,256KB,8MB,24GB
+lib/macos/loop-O0,30000,16384,asc,0.872049,563,inverness.cs.adelaide.edu.au,Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz,4c/8t,32KB,32KB,256KB,8MB,24GB
+lib/macos/loop-O0,30000,16384,random,0.917199,535,inverness.cs.adelaide.edu.au,Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz,4c/8t,32KB,32KB,256KB,8MB,24GB
+lib/macos/loop-O3,1500000,4096,asc,1.57554,3899,inverness.cs.adelaide.edu.au,Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz,4c/8t,32KB,32KB,256KB,8MB,24GB
+lib/macos/loop-O3,1500000,4096,random,1.58689,3871,inverness.cs.adelaide.edu.au,Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz,4c/8t,32KB,32KB,256KB,8MB,24GB
+lib/macos/loop-O3,400000,16384,dsc,1.18951,5509,foyers.local,Apple processor,8c/8t,128KB,64KB,4MB,,8GB
+lib/macos/loop-O3,400000,16384,random,1.24126,5279,foyers.local,Apple processor,8c/8t,128KB,64KB,4MB,,8GB
+lib/macos/loop-O3,5000,1048576,asc,1.11022,4722,foyers.local,Apple processor,8c/8t,128KB,64KB,4MB,,8GB
+lib/macos/loop-O3,5000,1048576,random,3.42171,1532,foyers.local,Apple processor,8c/8t,128KB,64KB,4MB,,8GB
+lib/centos8/loop-O3,1500000,4096,dsc,1.41952,4328,eagle,Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz,6c/6t,192KB,192KB,1536KB,9MB,32052MB
+lib/centos8/loop-O3,1500000,4096,random,1.40029,4387,eagle,Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz,6c/6t,192KB,192KB,1536KB,9MB,32052MB
+lib/centos8/loop-O3,5000,1048576,dsc,1.78421,2938,eagle,Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz,6c/6t,192KB,192KB,1536KB,9MB,32052MB
+lib/centos8/loop-O3,5000,1048576,random,7.00911,748,eagle,Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz,6c/6t,192KB,192KB,1536KB,9MB,32052MB
+lib/centos8/loop-O3,8,536870912,random,53.7372,79,eagle,Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz,6c/6t,192KB,192KB,1536KB,9MB,32052MB
+lib/macos/loop-O3,8,536870912,random,20.6563,207,foyers.local,Apple processor,8c/8t,128KB,64KB,4MB,,8GB
+Part 4 - Summarise what you have learnt
+Create a file, summary.txt, that contains a summary of what you have learnt from running your experiments.
