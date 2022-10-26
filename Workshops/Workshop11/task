@@ -1,0 +1,95 @@
+Workshop 11 - Code Generation
+Code Generation
+Overview
+In this workshop you will write a code generator that uses an abstract syntax tree output by the recursive descent parser for the simple programming language described in the previous workshop.
+
+To help you get started we have provided a working parser, parser.cpp, a skeleton of a code generator, translator.cpp and a library of useful functions that we use in most programming workshops and assignments. The library implements a tokeniser for the example language, an abstract syntax tree that can be read or written as XML, symbol tables and an output buffer. The library functions that you can use are described in the .h files in the includes sub-directory. The tokeniser functions are described in the tokeniser.h file, the abstract syntax tree functions are described in the abstract-syntax-tree.h file, the symbol tables are described in the symbols.h file and the output buffer is described in the iobuffer.h file. You may not need to use all of this functionality in this workshop.
+
+Weighting and Due Dates
+Available participation marks:
+week 11: 4 (preparation 2, activity 2)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 11
+Activity: 11:55pm Friday of week 11
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 11 Background Reading
+Before attending the workshop you should read the full workshop description, review the startup files provided and you may wish to re-read chapter 11 of the textbook.
+
+Workshop 11 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 11 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop11 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop 11 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and commit them to svn:
+% make install
+Review the startup file parser.cpp. This a working version of the parser that you could have written in last week's workshop and is the source code for bin/parser. 
+Compile a skeleton version of the translator program to be implemented in this workshop using the command:
+% make notest
+The executable program, translator, is compiled using the file translator.cpp and the precompiled library files lib/*/libcs*.a. The main function in the translator program calls the walk_program() and passes it an abstract syntax tree constructed by the function ast_parse_xml().
+
+Commit the changes to your svn repository:
+% svn commit -m "Workshop 11 Startup Files"
+Goto the Web Submission System and make a submission to the "Workshop 11 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 11 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 11 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+After completing each part of the following activity, commit your changes to svn:
+
+% svn commit -m workshop11-activity
+After each commit, go to the Web Submission System and make a submission to the Workshop 11 assignment. A successful submission that passes the first of the codegen tests will complete the workshop activity.
+
+Code Generation - VM Code
+Write a code generator for the simple programming language described in the previous workshop that will produce the equivalent Hack Virtual Machine code. You should do this by adding code to the translator.cpp file that will traverse an abstract syntax tree produced by bin/parser that you could have written in the previous workshop.
+
+To simplify your task you can make the assumption that the abstract syntax tree you have been provided has been correctly constructed and that it also corresponds to a syntactically correct program. The get_*() functions provided  by the abstract syntax tree implementation always check that the node they are asked to operate on is of the correct kind. If they encounter the wrong kind of node a fatal error is reported.
+
+In general, a correctly constructed tree will have one node for each term in the grammar, that is, one node per parse_XXX() function in the original parser. Therefore, the code generator should also be able to be structured with matching walk_XXX() functions where each function takes a node to process as its sole argument.
+
+The abstract syntax tree represents variables by a node that records their name, type, segment and offset. Therefore, there is no need to use symbol tables in your translator program.
+
+Example Walk Function
+Assuming that we have a correctly constructed abstract syntax tree, the walk_let() function in the translator could be written as:
+
+// ast create_let(ast variable,ast expression)
+static void walk_let(ast n)
+{
+    ast var = get_let_variable(n) ;
+    string segment = get_variable_segment(var) ;
+    int offset = get_variable_offset(var) ;
+
+    walk_expression(get_let_expression(n)) ;
+
+    write_to_output("pop " + segment + " " + std::to_string(offset) + "\n") ;
+}
+The node passed to walk_let() should be the result of a call to create_let(). It should have two fields, variable is an identifier and expression is an expression. The variable also has a field offset containing the variable's location in the local segment. The first thing this code does is access the variable and then access the variable's segment and offset. Next, it passes the expression to the walk_expression() function and assumes that it will generate the code to place the value being assigned onto the top of the stack. Finally it pops that value off the stack and into the variable.
+
+Virtual Machine Output
+The virtual machine code produced should be prefixed by the following function header:
+
+function Main.main x
+where the value x is the number of identifiers declared in the program. You should note that the walk_declarations() function returns an integer parameter for this purpose. The first identifier should be referred to as local 0, the second as local 1, and so on.
+
+The virtual machine code produced should be terminated with the following two commands:
+
+push constant 0
+return
+If you do this, you should be able to test your generated code by running your program in the VMEmulator.
+
+Limited VM Operators
+The Hack Virtual Machine lacks a number of useful operators. The builtins that you can use are limited to, add ("+"), sub ("-"), lt ("<"), gt (">") and eq ("=="). In order to generate correct code for multiply ("*") and divide ("/") you need to call the Math.multiply() and Math.divide() functions provided by the Jack Operating System. In order to generate code for the missing logical operators you can generate two operators where the second one is logical not. For example, "<=" can be implemented as gt followed by not. The skeleton translator.cpp file contains the function translate_op() that will generate the correct VM code for each kind of operator token.
+
+Automatic Testing
+So that you can test your code generator, we have provided example programs in the tests directory in the zip file attached below. You can test your code generator as follows:
+
+% make
+ Test | Program    | Output | Errors | Status | Test Result | Description           
+ 1    | translator |   F.   |   ?    |   ?    | Test Failed | while loop 
+ 3    | translator |   F.   |   ?    |   ?    | Test Failed | nested ifs and whiles 
