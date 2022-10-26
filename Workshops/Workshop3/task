@@ -1,0 +1,73 @@
+Workshop 03 - Sequential Hardware
+The purpose of this workshop is to show you how memory could be built in hardware. This is based on project 03Links to an external site. from the Nand2Tetris course. This workshop uses builtin (working) versions of the chips you have already seen.
+
+Weighting and Due Dates
+Available participation marks:
+week 3: 4 (preparation 2, activity 2)
+week 4: 5 (project 5)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 3
+Activity: 11:55pm Friday of week 3
+Project: 11:55pm Friday of week 4
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 03 Background Reading
+Read the third chapter of the text book and the project 03 description from the Nand2Tetris course. Then think about how you would answer these two questions:
+
+Question 1
+Purely combinatorial circuits don't need a clock. However, a clock becomes important once we have a memory to store data. Why is a clock is important for memory to function properly? (Hint: this relates to the definition of memory itself).
+
+Question 2
+Read chapter 3.1 of the textbook - under the paragraph heading "Time Matters". In the Hack machine only memory chips and registers have sequential logic. This means that the other (combinatorial) logic is time insensitive. This means that, depending on the length of the wires, operations such as those in the ALU will, for some moments of time, be producing garbage as they wait for all signals coming in to be in sync. Why does this period of garbage not affect the correct working of the chip?
+
+Pencil and Paper
+You will find it much easier to understand what is happening if you bring some paper and something to write with. Drawing pictures of how gates fit together and truth tables of what inputs produce what outputs can be very helpful.
+
+Workshop 03 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 03 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop03 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop03 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and then commit the files to svn:
+% make install
+Goto the Web Submission System and make a submission to the "Workshop 03 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 03 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 03 - Activity" assignment
+the steps below assume that you have completed the preparation task
+the files to be edited are in the workshop03/a or workshop03/b sub-directories but make must be run in the workshop03 directory
+in example commands % is the shell's prompt, it is not part of the command
+After completing each of the following steps, commit your changes to svn:
+
+% svn commit -m workshop03-activity
+After each commit, go to the Web Submission System and make a submission to the "Workshop 03 - Submit Here" assignment. A successful submission that passes the Bit, Register and RAM8 tests will complete the workshop activity.
+
+Change directory to the working copy of the workshop03 directory.
+Build and test a one-bit register from project 03 of the Nand2Tetris course. This requires you to edit the HDL file a/Bit.hdl.
+If you draw yourself a picture of the information flow you will see that you only need two chips to implement this, a Mux chip and a DFF chip.
+
+Build and test using HDL a 16 bit register from project 03 of the Nand2Tetris course. This requires you to edit the HDL file a/Register.hdl.
+
+If you draw yourself a picture of the information flow you will see that you only need one chip, the Bit chip, but you need 16 copies of it. To separate out the 16 bit inputs and outputs, you can name a specific wire using array notation. So to refer to input wire 3, you can write in[3] and to refer to output wire 3, you can write out[3]. The individual wires are numbered form 0 to 15.
+
+Build and test using HDL a memory of 8 registers. This requires you to edit the HDL file a/RAM8.hdl.
+If you draw yourself a picture of the information flow you will see that you need several chips: Register chips, Mux8Way16 chips and DMux8Way chips. The key observation to make is that you cannot choose which register to send the input to, it must go to all registers. That is why we never implemented any DMux8Way16 chips. Instead you need to use a DMux8Way chip to choose which register receives the load signal.
+
+Workshop 03 Project
+You are expected to know what all the chips do and how to implement them. They are the building blocks we will use to construct the Hack processor. This workshop provides an opportunity to receive an additional 5 participation marks by completing the entire workshop. If you get stuck on hdl consult the Hardware Simulator Tutorial or the HDL Survival Guide on the nand2tetris website.
+
+Notes:
+
+all submissions to the "Workshop 03 - Submit Here" assignment will receive up to 5 additional participation marks for submissions by the project due date
+the additional project marks are shown by the associated "Workshop 03 - Project" assignment
+Build and test using HDL a memory of 64 registers. This requires you to edit the file a/RAM64.hdl.
+If you draw yourself a picture of the information flow you will see that you could replace the Register chips from the previous step with RAM8 chips. The key observation to make is that you need to carefully choose which part of the address is used by your DMux8Way and Mux8Way16 chips and which part is passed through to the RAM8 chips. You can refer to a subset of a set of wires using a combination of array notation and the .. operator. For example, to refer to the least significant 3 bits of an address, you can write address[0..2].
+
+If time permits you could change to the b directory and attempt to build bigger memories. The construction of each larger memory can reuse the existing chips in exactly the way as the RAM64 chip reuses the RAM8 chip. The only differences are the selection of writes from the address.
+
+After completing the RAM64 chip you may instead prefer to attempt an implementation of the Program Counter. This is more challenging since it requires you to implement a reset signal, use an adder, or choose a jump based on the two output signals from the ALU, zr and ng in combination with select bits from the current instruction.
