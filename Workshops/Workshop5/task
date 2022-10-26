@@ -1,0 +1,218 @@
+Writing a Tokeniser
+ 
+Overview
+All of the programming assignments in this course are based on reading a file containing a program and translating it into some other form. The first step in any translation is to recognise the basic language elements such as identifiers, numbers, operators, etc. This first step is performed by a tokeniser. In this workshop you are going to implement a tokeniser that will be used to break a text file into tokens that match certain rules. The grammar rules may or may not match any particular programming language, they are just to give some practise writing a tokeniser. You will start with a skeleton implementation and incrementally add functionality that can recognise different kinds of tokens. Your implementations will be linked to a main program that will display a list of the tokens found in a given source file. A brief description of how the rules are written, including a worked example, is included in the EBNF, Languages and Parsing page for those who have not yet covered this material in their other courses.
+
+Weighting and Due Dates
+Available participation marks:
+week 5: 4 (preparation 2, activity 2)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 5
+Activity: 11:55pm Friday of week 5
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 05 Background Reading
+Before attending the workshop you should read the full workshop description, review the startup files and read the EBNF, Languages and Parsing page. There should also be a video introduction available in Echo 360.
+
+Workshop 05 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 05 - Preparation" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop05 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop 05 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and then commit the files to svn:
+% make install
+Compile a copy of the tokeniser program that has a skeleton implementation of the tokeniser in the files tokeniser.cpp and tokeniser-extras.cpp.
+% make
+ Test | Program     | Output | Errors | Status | Test Result | Description    
+...
+ b1    | tokeniser     |   F.   |   F.   |   P.   | Test Failed | Hack assembler 
+ b2    | tokeniser     |   F.   |   F.   |   P.   | Test Failed | Hack assembler 
+...
+ b7    | tokeniser     |   F.   |   F.   |   P.   | Test Failed | Hack assembler 
+...
+
+This will compile the files tokens.cpp, tokeniser-extras.cpp and tokeniser.cpp, then link them with a precompiled library files, lib/*/libcs*.a in order to create an executable program named tokeniser. If the compilation succeeds it will automatically run a complete set of tests all of which you will fail.
+
+Now run tokeniser and give it some text input. You can do this using pipes, shell redirection or just typing at the keyboard. Pipes are a way of connecting multiple commands together so that all the output from one command is copied to the input of the next command in the sequence.
+
+The initial implementation does not recognise characters that start tokens so it reports that it cannot find them. This is a logic error and is reported as such. You should see the output below after you have a working tokeniser.
+
+Using shell redirection, if the file exists and is empty (/dev/null is a special empty file):
+% ./tokeniser < /dev/null
+read 0 tokens
+Using a pipe, if the file exists and is empty:
+% cat /dev/null | ./tokeniser
+read 0 tokens
+Using a pipe with the echo command, there are 4 spaces inside the double quotes and echo adds a newline on the end:
+% echo "    " | ./tokeniser
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind: \n, spelling: "\n"}
+read 5 tokens
+Finally by typing at the keyboard:
+% ./tokeniser
+MD=A
+{kind: identifier, spelling: "MD"}
+{kind: =, spelling: "="}
+{kind: identifier, spelling: "A"}
+{kind: \n, spelling: "\n"}
+read 4 tokens
+ Important: when typing input at the keyboard you can simulate end of input by pressing control-D, however if your program terminates by itself and you enthusiastically press control-D you can accidentally logout.
+
+Goto the Web Submission System and make a submission to the "Workshop 05 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 05 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 05 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+After completing each part of the following activity, commit your changes to svn:
+
+% svn commit -m workshop05-activity
+After each commit, go to the Web Submission System and make a submission to the Workshop 05 assignment. A successful submission that passes the tests for tests a1 to a8 will complete the workshop activity.
+
+Tokens to Recognise
+The grammar that describes the tokens that you must recognise can be found in the header file includes/tokeniser.h. All tokens must be contiguous characters in the input. For example, if the input contains a contiguous set of characters that can form an identifier, eg "if42" then the tokeniser would return a Token object that has kind tk_identifier and spelling "if42".
+
+The Token objects returned by the read_next_token() function describe a token's kind and its spelling. This is to provide a compiler writer more flexibility in how they write their code. For example, when checking the syntax of a program the fact that the next token is an identifier is initially more important than exactly which one it is. That detail will be needed later to check other things and to generate the correct code. In other cases knowing which keyword you have may be more important than just knowing that you have a keyword. Providing these different views of a token in a single object avoids unnecessary constraints on the users of the tokeniser.
+
+The Tokeniser Interface
+The tokeniser interface does not allow you to see how a token object is implemented. In fact the Token values used to identify a token object are simply 64-bit integer values that are used to index a private table. The contents of a token can be inspected using the external functions defined in the include file includes/tokeniser.h. The contents of a token object can never be modified and they remain in existence until your program terminates.
+
+Writing a Tokeniser
+Now that you know how to compile and run the tokeniser program, you should attempt to write your own tokeniser to recognise the different kinds of tokens shown below. To do this you need to complete the skeleton implementation provided in the tokeniser.cpp and tokeniser-extras.cpp files. If you modify any other files, they will be automatically regenerated the next time you run make.
+
+The grammar rules for the tokens are described in the includes/tokeniser.h file. Each grammar rule has a matching parse_*() function in the tokeniser.cpp file except for input, letter, alnum, digit19, digit and eoi. The input rule is handled by the main program and the other rules are effectively single characters. There is also a TokenKind value for each kind of token that can be returned. These names are all prefixed by tk_ so that they do not clash with other names.
+
+To assist in writing the parse_*() functions the include/tokeniser-extras.h file contains some character group definitions so that you easily refer to particular groups of characters, for example all the characters that can start an identifier can be referred to using the character group cg_identifier. The values of the cg_ groups cannot be confused with a legal character. There is one cg_ group for each grammar rule that can be started by more than one character and it includes all the characters that can start that rule.
+
+There are a few restrictions on the implementation of your tokeniser. You may not write any additional functions and you may not change the read_next_token() function. All parsing must be completed using only the functions read_next_char(), next_char_isa(), next_char_mustbe() and did_not_find_char().  Except for the read_next_char() function, these functions can be passed either a character or a character group as appropriate. It should be noted that nowhere in the parser do you actually need to directly access an input character. This structure is to ensure that the grammar to parse_*() function translation is a simple as possible.
+
+The implementation of these parsing functions relies on the ability to tell if a particular character belongs to a particular character group. To achieve this, the function next_char_isa() calls the function char_isa() and passes it the next input character, ch, and a character or character group, cg. If the cg parameter is a character, char_isa() will return true if ch is equal to cg. If the cg parameter is a character group, char_isa() will return true if ch is a member of the character group cg. If you look at the tokeniser-extras.cpp file you will see that the skeleton function has been constructed as a set of nested switch statements, one per character group. You just need to add the appropriate labels to each nested switch statement to complete the implementation. For example, to complete the implementation of the cg_integer statement you just need to add a single case label to capture the digits 0 up to 9:
+
+case cg_integer:
+    switch(ch)
+    {
+    case '0' ... '9':
+        return true ;
+    default:
+        return false ;
+    }
+The last two functions that need to be completed in the tokeniser-extras.cpp file are called by the new_token() function to make sure that it creates a token object annotated with the correct kind and with an appropriate spelling. The classify_spelling() function is passed a string containing the characters that were parsed when recognising a token and it returns the token's kind. Since we know that the spelling must be a legal token, it is very easy to work out what kind of token it must be, in almost all cases you can tell just by looking at the first character. However, there is a special case, keywords all look like identifiers. To make handling this case really easy you must use the keyword_or_identifier() function to do the checking for you. This avoids you needing to know what the keywords are.
+
+The final function that usually needs some work is the correct_spelling() function. This function would be used with tokens such as strings where you may not want to store the " " around the string. They must be there in a program's source code but at run time you only want the contents. The correct_spelling() function is passed a string containing the characters that were parsed when recognising a token and the token's kind. It then returns a copy of the string with any modifications required by the token's kind.
+
+Incremental Development
+There are quite a few different kinds of tokens that you need to be able to recognise. However, you can incrementally add code to your tokeniser.cpp file to recognise one kind at a time. The test files we supply will only test certain kinds of tokens so you can start with simple cases and work your way towards the more complex. We would recommend starting with single character symbols before moving on to other more complex tokens.
+
+Grammar to Parser Translation Rules
+A grammar describes a set of patterns, all the patterns described by a grammar are a language, and parsing is simply telling if a string could have been generated from the grammar, in other words, is it an example of the language.
+
+The key idea in implementing the tokeniser is that once you have matched the next character in the input against what you are expecting, read the next character and move on. This idea can be used to mechanically translate an appropriate grammar, such as the one used in this workshop, into a working parser. We can achieve this by applying the following 6 simple rules to a grammar as follows:
+
+character or character group, c - the next character must be the character c or a member of group c
+if the next character of the input is not c and not a member of group c, report not finding c as an error and stop, otherwise read the next character
+rule_name - the next part of the input is described by rule rule_name
+call the function to parse the rule rule_name
+A? - the next part of the input may or may not be term A
+if the next character of the input can start term A, apply these rules to parse term A
+A* - the next part of the input is 0 or more repeats of term A
+while the next character of the input can start term A, apply these rules to parse termA
+A B C ... - the next part of the input should be term A followed by term B, followed by term C, and so on
+apply these rules to parse term A, then
+apply these rules to parse term B, then
+apply these rules to parse term C, and so on
+A | B | C | ... - the next part of the input should be either term A or term B or term C or ...
+if the next character of the input can start term A, apply these rules to parse term A, or
+if the next character of the input can start term B, apply these rules to parse term B, or
+if the next character of the input can start term C, apply these rules to parse term C, or
+...
+or
+report not finding a character that can start term A or term B or term C or ... as an error and stop
+It is important to remember that the goal of parsing is to check that the input matches the grammar and to report an error if it does not, ie do not assume that the input is correct! This means that in the case of rule 6 there is always one extra case to check, the one where none of the options can be started by the next character.
+
+If every grammar rule, R, that can be started by more than one character has its own character group, cg_R, and for each grammar rule, R, that does not describe a single character, we have a function parse_R(), we can implement the 6 rules as follows:
+
+character or character group, c
+next_char_mustbe(c) ;
+rule_name
+parse_rule_name() ;
+A?
+if A is the name of a rule that starts with character, c, or character group, c: 
+     if ( next_char_isa(c) ) parse_A() ;
+if A is a character or character group:
+     if ( next_char_isa(A) ) read_next_char() ;
+A*
+if A is the name of a rule that starts with character, c, or character group, c: 
+     while ( next_char_isa(c) ) parse_A() ;
+if A is a character or character group:
+     while ( next_char_isa(A) ) read_next_char() ;
+A B C ...
+parse term A ; parse term B ; parse term C ; ...
+A | B | C | ...
+if ( the next character of the input can start term A ) parse term A ; else
+... ; else
+did_not_find_char(cg_rule_name)
+if a term is a character, c, or character group, c:
+     if ( next_char_isa(c) ) read_next_char() ; else
+if a term is a rule name, R, that starts with character, c, or character group, c:
+     if ( next_char_isa(c) ) parse_R() ; else
+The parse_token() function in the tokeniser.cpp file is an example of how to implement rule 6.
+
+Testing Your Tokeniser
+Any time you have a tokeniser that compiles, you can run it with different test data to see if it works as expected. You can use any of the techniques shown above, for example when you have completed the workshop you might see:
+
+% echo "Dog=1;if" | ./tokeniser
+{kind: identifier, spelling: "Dog"}
+{kind: =, spelling: "="}
+{kind: integer, spelling: "1"}
+{kind: ;, spelling: ";"}
+{kind: if, spelling: "if"}
+{kind: \n, spelling: "\n"}
+read 6 tokens
+Constructing a set of test files is a very good idea because it allows to rerun tests exactly as they were with very little effort. If you have lots of tests you should also consider writing some scripts to automatically run all of the tests for you. There is not much time in a workshop so we have included a set of test inputs and outputs with the startup files. Every time you run make your tokeniser will be run against all of the supplied tests in the tests sub-directory:
+
+% make
+ Test | Program     | Output | Errors | Status | Test Result | Description    
+...
+ b1   | tokeniser   |   P.   |   P.   |    P   | Test Passed | Hack assembler 
+ b2   | tokeniser   |   P*   |   P*   |    P   | Test Passed | Hack assembler 
+...
+ b7   | tokeniser   |   P*   |   P*   |    P   | Test Passed | Hack assembler 
+...
+
+The test scripts do not show the program outputs but they can show you if your output, your error output and your exit status are correct as well as if you passed or failed a test overall. In this example, test b1 has produced the expected test output and the expected error output but the test was not interested in checking the exit status. Test b2 produced similar output but in this case some trace writes or error log messages were also output. The tests are all run with trace writes / error logs enabled and then disabled. The magenta * indicates this resulted in different output for test b2. The tests used for marking disable trace writes and error log messages but you may find them helpful for debugging.
+
+If you want to see the real output of your programs you can pass a number of different arguments to make including:
+
+show - this shows the results of the last tests run
+Show - this shows a more detailed version of the results of the last tests run
+less - this the same as show but the output is piped through less
+Less - this the same as show but the output is piped through less
+live - this runs a single test, then reruns the test and displays the output and error output as it runs
+In the case of show/Show/less/Less/live you can provide the id of the test to limit the output, eg to see the live output from running test b2, you can type:
+
+% make live b2
+ Test | Program     | Output | Errors | Status | Test Result | Description    
+ b2   | tokeniser   |   P*   |   P*   |    P   | Test Passed | Hack assembler 
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind:  , spelling: " "}
+{kind: @, spelling: "@"}
+{kind: identifier, spelling: "hello"}
+
+***** Fatal error!
+error: 
+***** Fatal error!
+error: Expected: "a character that can start a token" but found: "_"
