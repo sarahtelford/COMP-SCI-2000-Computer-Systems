@@ -1,0 +1,426 @@
+Virtual Machine Translation
+ 
+Overview
+Completing this workshop should expose you to the keys ideas required to translate Jack Virtual Machine Code into Hack Assembly Language.
+
+To simplify the task we have skipped the parsing component of the relevant Nand2Tetris projects and have provided a useful programs, bin/testit. You can use this to write Hack Assembly Language implementations of individual VM commands and see what happens as they are executed.
+
+Weighting and Due Dates
+Available participation marks:
+week 7: 4 (preparation 2, activity 2)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 7
+Activity: 11:55pm Friday of week 7
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 07 Background Reading
+Before attending the workshop you should read the full workshop description, review the startup files provided and you may wish to re-read chapter 7 of the textbook.
+
+Workshop 07 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 07 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop07 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop07 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and commit them to svn:
+% make install
+Goto the Web Submission System and make a submission to the "Workshop 07 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 07 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 07 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+After completing the VM command implementations in each question*.vm-asm file, commit your changes to svn:
+
+% svn commit -m workshop07-activity
+After each commit, go to the Web Submission System and make a submission to the "Workshop 07 - Submit Here" assignment. A successful submission that passes the tests of question00.vm-asm, question01.vm-asm and question02.vm-asm will complete the workshop activity.
+
+VM Translation
+When translating VM commands into Hack Assembly Language there are a number of conventions that you must observe, some of which will be checked by the tools that we are using:
+Notes:
+
+VM commands produced by the Jack compiler always start with a function command.
+All function names are prefixed by the name of the class being compiled and the character '.', eg a function "func" inside a class "Silly" would be named "Silly.func".
+If the first VM command is not a function command, the initial function name is "Unknown.unknown".
+Function names are translated into an assembly language label of the same name.
+VM label names are translated into an assembly language label that is prefixed by the name of the current function and the character '$', eg inside the VM function "Silly.func", the label "LL" would be translated into "Silly.func$LL".
+Static variables, referred to by offsets into the static segment, are translated into an assembly language symbol that prefixes the offset with the current classname and the character '.', eg inside the function "Silly.func", references to "static 6" would be translated into references to "Silly.6".
+bin/assembler
+The bin/assembler program assumes that its input is a series of VM commands each followed by their implementation and a blank line or the end of input. If no implementation is provided for a VM command it is immediately followed by a blank line or the end of input. Here is an example input for a function Silly.func that has no local variables and calculates the sum of 5 and static variable 6. The first contains a question file without the implementations and the second contains possible implementations.
+
+Example Input - No Implementations
+function Silly.func 0
+
+push constant 5
+
+push static 6
+
+add
+Example Input - Full Implementations
+function Silly.func 0
+(Silly.func)
+
+push constant 5
+@5
+D=A
+@SP
+AM=M+1
+A=A-1
+M=D
+
+push static 6
+@Silly.6
+D=M
+@SP
+AM=M+1
+A=A-1
+M=D
+
+add
+@SP
+AM=M-1
+D=M
+A=A-1
+M=D+M
+Example Outputs
+The output of bin/assembler is highly structured and is designed to be read by the bin/simulator program, not by humans.  It contains extra data so that the instructions that implement each command can be safely executed as part of testing by the simulator. For example, each command's implementation is enclosed in its own STRTVM, STOPVM section, there are no_op sections following any implementation that contain no instructions and if any VM language labels are left undefined they are added to the EXTERNALS section. The output for our second example looks like this:
+
+STRT CLASS
+STRTVM function Silly.func 0
+00000:                   // function Silly.func 0
+00000: (Silly.func)
+STOPVM function Silly.func 0
+
+STRTVM no_op
+00000: 1110101010000000         0
+STOPVM no_op
+
+STRTVM push constant 5
+00001:                   // push constant 5
+00001: 0000000000000101  @5     @5
+00002: 1110110000010000         D=A
+00003: 0000000000000000  @0     @SP
+00004: 1111110111101000         AM=M+1
+00005: 1110110010100000         A=A-1
+00006: 1110001100001000         M=D
+STOPVM push constant 5
+
+STRTVM push static 6
+00007:                   // push static 6
+00007: 0000000000010110  @22    @Silly.6
+00008: 1111110000010000         D=M
+00009: 0000000000000000  @0     @SP
+00010: 1111110111101000         AM=M+1
+00011: 1110110010100000         A=A-1
+00012: 1110001100001000         M=D
+STOPVM push static 6
+
+STRTVM add
+00013:                   // add
+00013: 0000000000000000  @0     @SP
+00014: 1111110010101000         AM=M-1
+00015: 1111110000010000         D=M
+00016: 1110110010100000         A=A-1
+00017: 1111000010001000         M=D+M
+STOPVM add
+
+STRT CLEANUP
+STRT EXECUTION STOP
+00018:                   (Silly..end)
+00018: 0000000000010010  @18    @Silly..end
+00019: 1110101010000111         0;JMP
+00020:                   (Silly..return)
+00020: 0000000000010100  @20    @Silly..return
+00021: 1110101010000111         0;JMP
+STOP EXECUTION STOP
+
+STRT EXTERNALS
+STOP EXTERNALS
+
+STOP CLEANUP
+STOP CLASS
+bin/simulator
+The bin/simulator program will attempt to execute each VM command's implementation to see if it works. After executing a command's implementation, checks are made to ensure that only the correct memory locations were read, that the correct values were written to the correct memory locations and that the final program counter value is correct. In some cases a command's implementation may be executed several times unless it fails. If a command fails or makes too many changes to memory, the simulator will reinitialise itself before the next test. A random number generator is used so that not all tests are quite the same.
+
+The full output from the simulator shows a before and after section for the VM command showing you what should happen. This is followed by an instruction by instruction trace of the execution of the implementation. In both cases only memory locations relevant to the command are shown.
+
+Here is the full output from simulating the example:
+
+% cat question01.vm-asm | bin/assembler | bin/simulator
+SIM: Starting Testing of VM Class
+SIM: Initialising the Hack Computer
+SIM: Simulation of VM command function Silly.func 0
+HVM: ---------------------
+HVM: function Silly.func 0
+HVM: ---------------------
+HVM:               address
+HVM:                before
+HVM:                 after
+HVM: ---------------------
+CPU: ----------------------------
+CPU: PC |    Assembly Language   
+CPU: ----------------------------
+CPU:  0 | executed 0 instructions
+CPU: ----------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command push constant 5
+HVM: -------------------------------
+HVM: push constant 5 |  SP | RAM[sp]
+HVM: -------------------------------
+HVM:         address |   0 |     631
+HVM:          before | 631 |       .
+HVM:           after | 632 |       5
+HVM: -------------------------------
+CPU: ---------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] | D | ALU |  A' | RAM[A]' | D' |    Assembly Language   
+CPU: ---------------------------------------------------------------------------------------------
+CPU:  1 | 0000000000000101 |   . |      . | . |   . |   5 |       . |  . | @5         // @5
+CPU:  2 | 1110110000010000 |   5 |      . | . |   5 |   . |       . |  5 | D=A
+CPU:  3 | 0000000000000000 |   . |      . | . |   . |   0 |       . |  . | @0         // @SP
+CPU:  4 | 1111110111101000 |   0 |    631 | . | 632 | 632 |     632 |  . | AM=M+1
+CPU:  5 | 1110110010100000 | 632 |      . | . | 631 | 631 |       . |  . | A=A-1
+CPU:  6 | 1110001100001000 | 631 |      . | 5 |   5 |   . |       5 |  . | M=D
+CPU:  7 |                  |     |        |   |     |     |         |    | executed 6 instructions
+CPU: ---------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command push static 6
+HVM: ----------------------------------------
+HVM: push static 6 |  SP | static 6 | RAM[sp]
+HVM: ----------------------------------------
+HVM:       address |   0 |       22 |     632
+HVM:        before | 632 |      935 |       .
+HVM:         after | 633 |        . |     935
+HVM: ----------------------------------------
+CPU: ------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |  D  | ALU |  A' | RAM[A]' |  D' |    Assembly Language   
+CPU: ------------------------------------------------------------------------------------------------
+CPU:  7 | 0000000000010110 |   . |      . |   . |   . |  22 |       . |   . | @22        // @Silly.6
+CPU:  8 | 1111110000010000 |  22 |    935 |   . | 935 |   . |       . | 935 | D=M
+CPU:  9 | 0000000000000000 |   . |      . |   . |   . |   0 |       . |   . | @0         // @SP
+CPU: 10 | 1111110111101000 |   0 |    632 |   . | 633 | 633 |     633 |   . | AM=M+1
+CPU: 11 | 1110110010100000 | 633 |      . |   . | 632 | 632 |       . |   . | A=A-1
+CPU: 12 | 1110001100001000 | 632 |      . | 935 | 935 |   . |     935 |   . | M=D
+CPU: 13 |                  |     |        |     |     |     |         |     | executed 6 instructions
+CPU: ------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command add
+HVM: -------------------------------------
+HVM:   add   |  SP | RAM[sp-2] | RAM[sp-1]
+HVM: -------------------------------------
+HVM: address |   0 |       631 |       632
+HVM:  before | 633 |         5 |       935
+HVM:   after | 632 |       940 |         .
+HVM: -------------------------------------
+CPU: ------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |  D  | ALU |  A' | RAM[A]' |  D' |    Assembly Language   
+CPU: ------------------------------------------------------------------------------------------------
+CPU: 13 | 0000000000000000 |   . |      . |   . |   . |   0 |       . |   . | @0         // @SP
+CPU: 14 | 1111110010101000 |   0 |    633 |   . | 632 | 632 |     632 |   . | AM=M-1
+CPU: 15 | 1111110000010000 | 632 |    935 |   . | 935 |   . |       . | 935 | D=M
+CPU: 16 | 1110110010100000 | 632 |      . |   . | 631 | 631 |       . |   . | A=A-1
+CPU: 17 | 1111000010001000 | 631 |      5 | 935 | 940 |   . |     940 |   . | M=D+M
+CPU: 18 |                  |     |        |     |     |     |         |     | executed 5 instructions
+CPU: ------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command add
+HVM: -------------------------------------
+HVM:   add   |  SP | RAM[sp-2] | RAM[sp-1]
+HVM: -------------------------------------
+HVM: address |   0 |       630 |       631
+HVM:  before | 632 |      2190 |       940
+HVM:   after | 631 |      3130 |         .
+HVM: -------------------------------------
+CPU: -------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |  D  |  ALU |  A' | RAM[A]' |  D' |    Assembly Language   
+CPU: -------------------------------------------------------------------------------------------------
+CPU: 13 | 0000000000000000 |   . |      . |   . |    . |   0 |       . |   . | @0         // @SP
+CPU: 14 | 1111110010101000 |   0 |    632 |   . |  631 | 631 |     631 |   . | AM=M-1
+CPU: 15 | 1111110000010000 | 631 |    940 |   . |  940 |   . |       . | 940 | D=M
+CPU: 16 | 1110110010100000 | 631 |      . |   . |  630 | 630 |       . |   . | A=A-1
+CPU: 17 | 1111000010001000 | 630 |   2190 | 940 | 3130 |   . |    3130 |   . | M=D+M
+CPU: 18 |                  |     |        |     |      |     |         |     | executed 5 instructions
+CPU: -------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command add
+HVM: -------------------------------------
+HVM:   add   |  SP | RAM[sp-2] | RAM[sp-1]
+HVM: -------------------------------------
+HVM: address |   0 |       629 |       630
+HVM:  before | 631 |      2148 |      3130
+HVM:   after | 630 |      5278 |         .
+HVM: -------------------------------------
+CPU: ---------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |   D  |  ALU |  A' | RAM[A]' |  D'  |    Assembly Language   
+CPU: ---------------------------------------------------------------------------------------------------
+CPU: 13 | 0000000000000000 |   . |      . |    . |    . |   0 |       . |    . | @0         // @SP
+CPU: 14 | 1111110010101000 |   0 |    631 |    . |  630 | 630 |     630 |    . | AM=M-1
+CPU: 15 | 1111110000010000 | 630 |   3130 |    . | 3130 |   . |       . | 3130 | D=M
+CPU: 16 | 1110110010100000 | 630 |      . |    . |  629 | 629 |       . |    . | A=A-1
+CPU: 17 | 1111000010001000 | 629 |   2148 | 3130 | 5278 |   . |    5278 |    . | M=D+M
+CPU: 18 |                  |     |        |      |      |     |         |      | executed 5 instructions
+CPU: ---------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command add
+HVM: -------------------------------------
+HVM:   add   |  SP | RAM[sp-2] | RAM[sp-1]
+HVM: -------------------------------------
+HVM: address |   0 |       628 |       629
+HVM:  before | 630 |       612 |      5278
+HVM:   after | 629 |      5890 |         .
+HVM: -------------------------------------
+CPU: ---------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |   D  |  ALU |  A' | RAM[A]' |  D'  |    Assembly Language   
+CPU: ---------------------------------------------------------------------------------------------------
+CPU: 13 | 0000000000000000 |   . |      . |    . |    . |   0 |       . |    . | @0         // @SP
+CPU: 14 | 1111110010101000 |   0 |    630 |    . |  629 | 629 |     629 |    . | AM=M-1
+CPU: 15 | 1111110000010000 | 629 |   5278 |    . | 5278 |   . |       . | 5278 | D=M
+CPU: 16 | 1110110010100000 | 629 |      . |    . |  628 | 628 |       . |    . | A=A-1
+CPU: 17 | 1111000010001000 | 628 |    612 | 5278 | 5890 |   . |    5890 |    . | M=D+M
+CPU: 18 |                  |     |        |      |      |     |         |      | executed 5 instructions
+CPU: ---------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+|----------------------------------------------------------------------------------|
+|                  |       |        | Instructions Executed | Implementation Sizes |
+|    VM Commands   | Tests | Passed |  Min |  Max |  Total  |  Min |  Max |  Total |
+|----------------------------------------------------------------------------------|
+| add              |     1 |      1 |    5 |    5 |       5 |    5 |    5 |      5 |
+| function f 0     |     1 |      1 |    0 |    0 |       0 |    0 |    0 |      0 |
+| push constant 2+ |     1 |      1 |    6 |    6 |       6 |    6 |    6 |      6 |
+| push static 2+   |     1 |      1 |    6 |    6 |       6 |    6 |    6 |      6 |
+|----------------------------------------------------------------------------------|
+|      Totals      |     4 |      4 |                    17 |                   17 |
+|----------------------------------------------------------------------------------|
+You can turn off most of this output by setting the following environment variables to iob_disable:
+
+% export CSTOOLS_IOBUFFER_TRACES=iob_disable
+% export CSTOOLS_IOBUFFER_LOGS=iob_disable
+This will reduce the final output to:
+
+|-----------------------------------|
+|    VM Commands   | Tests | Passed |
+|-----------------------------------|
+| add              |     1 |      1 |
+| function f 0     |     1 |      1 |
+| push constant 2+ |     1 |      1 |
+| push static 2+   |     1 |      1 |
+|-----------------------------------|
+|      Totals      |     4 |      4 |
+|-----------------------------------|
+Writing Assembler
+Writing Hack Assembly language to implement the Hack Virtual Machine can be greatly simplified by making a few observations about the common components of the virtual machine commands.
+
+For example, lots of command need to either push a value onto the stack or pop one off, so you could write yourself a sequence of instructions that push or pop a value to / from register D. Every time you need to push or pop a value just copy-paste your instruction sequence.
+
+The add, sub, and, or, eq, lt and gt commands all replace the top two elements on the stack with a result. The first four instructions for each these could be those in the example above. That would leave the address of the left operand in register A and the value of the right operand in register D. So again, once you have written yourself an appropriate sequence of instructions, you can copy-paste whenever it is required.
+
+Push and pop commands both involve two steps, calculate the address of the part of the segment to read or write and either a push or pop operation. In the general case, the address calculation will need to use both the A and D registers which is a problem for a  pop command. A good approach is to calculate the address then save it into a temporary memory location until it is needed. You can safely use memory locations 13, 14 and 15 because these three locations cannot be referenced by any virtual machine commands.
+
+Automatic Testing
+You can automatically test your implementations of the VM commands in all of the question*.vm-asm files using the following command:
+
+% make
+If a test fails you can cut-paste the relevant commands that are printed and run the test yourself. You will then get to see the actual output from the simulator rather than just passed / failed.
+
+Manual Testing
+To manually test your implementation of a VM command, you can run the bin/testit:
+
+% bin/testit
+The first line of input you type is expected to be a VM command. All the following lines up to the first blank line or the end of input are expected to be the Hack Assembler that implements the command. When you have finished entering commands and assembler the simulator will test your implementation. For example, here is how an implementation of the add command might look if you type control-D after entering the M=D+M instruction:
+
+% bin/testit
+add
+@SP
+AM=M-1
+D=M
+A=A-1
+M=D+M
+SIM: Starting Testing of VM Class
+SIM: Initialising the Hack Computer
+SIM: Simulation of VM command add
+HVM: -------------------------------------
+HVM:   add   |  SP | RAM[sp-2] | RAM[sp-1]
+HVM: -------------------------------------
+HVM: address |   0 |       834 |       835
+HVM:  before | 836 |        90 |       262
+HVM:   after | 835 |       352 |         .
+HVM: -------------------------------------
+CPU: ------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |  D  | ALU |  A' | RAM[A]' |  D' |    Assembly Language   
+CPU: ------------------------------------------------------------------------------------------------
+CPU:  0 | 0000000000000000 |   . |      . |   . |   . |   0 |       . |   . | @0         // @SP
+CPU:  1 | 1111110010101000 |   0 |    836 |   . | 835 | 835 |     835 |   . | AM=M-1
+CPU:  2 | 1111110000010000 | 835 |    262 |   . | 262 |   . |       . | 262 | D=M
+CPU:  3 | 1110110010100000 | 835 |      . |   . | 834 | 834 |       . |   . | A=A-1
+CPU:  4 | 1111000010001000 | 834 |     90 | 262 | 352 |   . |     352 |   . | M=D+M
+CPU:  5 |                  |     |        |     |     |     |         |     | executed 5 instructions
+CPU: ------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command add
+HVM: -------------------------------------
+HVM:   add   |  SP | RAM[sp-2] | RAM[sp-1]
+HVM: -------------------------------------
+HVM: address |   0 |       833 |       834
+HVM:  before | 835 |       118 |       352
+HVM:   after | 834 |       470 |         .
+HVM: -------------------------------------
+CPU: ------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |  D  | ALU |  A' | RAM[A]' |  D' |    Assembly Language   
+CPU: ------------------------------------------------------------------------------------------------
+CPU:  0 | 0000000000000000 |   . |      . |   . |   . |   0 |       . |   . | @0         // @SP
+CPU:  1 | 1111110010101000 |   0 |    835 |   . | 834 | 834 |     834 |   . | AM=M-1
+CPU:  2 | 1111110000010000 | 834 |    352 |   . | 352 |   . |       . | 352 | D=M
+CPU:  3 | 1110110010100000 | 834 |      . |   . | 833 | 833 |       . |   . | A=A-1
+CPU:  4 | 1111000010001000 | 833 |    118 | 352 | 470 |   . |     470 |   . | M=D+M
+CPU:  5 |                  |     |        |     |     |     |         |     | executed 5 instructions
+CPU: ------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command add
+HVM: -------------------------------------
+HVM:   add   |  SP | RAM[sp-2] | RAM[sp-1]
+HVM: -------------------------------------
+HVM: address |   0 |       832 |       833
+HVM:  before | 834 |     -2000 |     32767
+HVM:   after | 833 |     30767 |         .
+HVM: -------------------------------------
+CPU: ------------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |   D   |  ALU  |  A' | RAM[A]' |   D'  |    Assembly Language   
+CPU: ------------------------------------------------------------------------------------------------------
+CPU:  0 | 0000000000000000 |   . |      . |     . |     . |   0 |       . |     . | @0         // @SP
+CPU:  1 | 1111110010101000 |   0 |    834 |     . |   833 | 833 |     833 |     . | AM=M-1
+CPU:  2 | 1111110000010000 | 833 |  32767 |     . | 32767 |   . |       . | 32767 | D=M
+CPU:  3 | 1110110010100000 | 833 |      . |     . |   832 | 832 |       . |     . | A=A-1
+CPU:  4 | 1111000010001000 | 832 |  -2000 | 32767 | 30767 |   . |   30767 |     . | M=D+M
+CPU:  5 |                  |     |        |       |       |     |         |       | executed 5 instructions
+CPU: ------------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+SIM: Simulation of VM command add
+HVM: -------------------------------------
+HVM:   add   |  SP | RAM[sp-2] | RAM[sp-1]
+HVM: -------------------------------------
+HVM: address |   0 |       831 |       832
+HVM:  before | 833 |     32767 |     -2000
+HVM:   after | 832 |     30767 |         .
+HVM: -------------------------------------
+CPU: ------------------------------------------------------------------------------------------------------
+CPU: PC |      Binary      |  A  | RAM[A] |   D   |  ALU  |  A' | RAM[A]' |   D'  |    Assembly Language   
+CPU: ------------------------------------------------------------------------------------------------------
+CPU:  0 | 0000000000000000 |   . |      . |     . |     . |   0 |       . |     . | @0         // @SP
+CPU:  1 | 1111110010101000 |   0 |    833 |     . |   832 | 832 |     832 |     . | AM=M-1
+CPU:  2 | 1111110000010000 | 832 |  -2000 |     . | -2000 |   . |       . | -2000 | D=M
+CPU:  3 | 1110110010100000 | 832 |      . |     . |   831 | 831 |       . |     . | A=A-1
+CPU:  4 | 1111000010001000 | 831 |  32767 | -2000 | 30767 |   . |   30767 |     . | M=D+M
+CPU:  5 |                  |     |        |       |       |     |         |       | executed 5 instructions
+CPU: ------------------------------------------------------------------------------------------------------
+SIM: Simulation of VM command was successul!
+|----------------------------------------------------------------------------------|
+|                  |       |        | Instructions Executed | Implementation Sizes |
+|    VM Commands   | Tests | Passed |  Min |  Max |  Total  |  Min |  Max |  Total |
+|----------------------------------------------------------------------------------|
+| add              |     1 |      1 |    5 |    5 |       5 |    5 |    5 |      5 |
+|----------------------------------------------------------------------------------|
+|      Totals      |     1 |      1 |                     5 |                    5 |
+|----------------------------------------------------------------------------------|
