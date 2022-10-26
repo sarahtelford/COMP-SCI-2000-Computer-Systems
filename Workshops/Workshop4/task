@@ -1,0 +1,86 @@
+Workshop 04 - Hack CPU
+The purpose of this workshop is to show you how the Hack CPU could be built. This is based on project 05Links to an external site. from the Nand2Tetris course. This workshop uses builtin (working) versions of the chips you have already seen.
+
+Weighting and Due Dates
+Available participation marks:
+week 4: 4 (preparation 2, activity 2)
+week 5: 5 (project 5)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 4
+Activity: 11:55pm Friday of week 4
+Project: 11:55pm Friday of week 5
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 04 Background Reading
+
+Read the third chapter of the text book and the project 05Links to an external site. description from the Nand2Tetris course.
+
+Workshop 04 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 04 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop04 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop04 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and then commit the files to svn:
+% make install
+Goto the Web Submission System and make a submission to the "Workshop 04 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 04 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 04 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+Build and test the Memory from project 05 of the Nand2Tetris course. This requires you to edit the HDL file Memory.hdl.
+
+The Memory is made up of 3 parts, 16K words for data, 8K words for the screen memory and 1 word for the keyboard register. You should use the builtin chips RAM16K, Screen and Keyboard to implement these components.
+
+One issue to consider is what to do when a request is made to read / write part of the memory after the keyboard register or to write on the keyboard register. You can simply choose to ignore the write requests but it is good practice to return 0 for the invalid read operations.
+
+You can test your Memory using either the Memory.tst or Memoryx.tst scripts. The Memory.tst script only works if run inside the Hardware Emulator's GUI because it reads from the keyboard device. The Memoryx.tst script does not test the keyboard and can be run from the command line:
+
+% make
+The web submission system does not use the Memory.tst script because it cannot run the GUI. A successful submission that passes the Memoryx tests will complete the workshop activity.
+
+Workshop 04 Project
+You are expected to know what all the chips do and how to implement them. This workshop provides an opportunity to receive an additional 5 participation marks by completing the entire workshop. You will then have completed the construction of a complete working computer. If you get stuck on hdl consult the Hardware Simulator Tutorial or the HDL Survival Guide on the nand2tetris website.
+
+Notes:
+
+all submissions to the "Workshop 04 - Submit Here" assignment will receive up to 5 additional participation marks for submissions by the project due date
+the additional project marks are shown by the associated "Workshop 04 - Project" assignment
+CPU
+Build and test the CPU from project 05 of the Nand2Tetris course. This requires you to edit the HDL file CPU.hdl.
+
+The main internal components of the CPU should be implemented using the PC, ARegister, DRegister, ALU and Mux16 builtin chips. The challenge is how to wire up the incoming instruction wires to the inputs of these chips marked with © in the following diagram:
+
+CPU-X.png
+
+A good starting point is to print a copy of this diagram and write on the names of all the internal wires. This will make it much easier to check that you have wired up the chips correctly. Once you have named the wires, start by connecting up the chips with the named wires.
+
+Next you can start working out how to connect the instruction wires to the © inputs. We suggest starting with the two Mux16 chips first, then the A and D registers, then the writeM output, then the 6 ALU control inputs and finally the PC inputs.
+
+The left Mux16 either allows the current instruction or the output from the ALU to be connected to the input of the A register. This choice depends on whether we have an A-instruction or a C-instruction. The most significant bit of an instruction, instruction[15], is 0 for an A-instruction or 1 for a C-instruction. You can connect this to control the sel input of the Mux16 chip.
+
+The right Mux16 either allows the contents of the A register or the data from memory, inM, to be fed into one input of the ALU. Given that we do not care what the ALU does in an A-instruction, we can simply use the a-bit of a C-instruction, instruction[12] to control the sel input of the Mux16 chip.
+
+The A register input is its load signal which must be set only if we have an A-instruction or a C-instruction that is writing to the A register.
+
+The D register input is its load signal which must be set only if we have a C-instruction that is writing to the D register.
+
+The writeM signal must be set only if we have a C-instruction that is writing to memory.
+
+We do not care what the ALU does in an A-instruction so the control inputs in a C-instruction, wires 6 to 11, can be directly connected to the ALU control inputs.
+
+The last step, wiring up the PC is the most complex. If we have an A-instruction or a C-instruction that does not perform a jump, the PC should just increment by 1. If we have a C-instruction that might jump we need to use the zero (zr) and negative (ng) outputs from the ALU combined with instruction wires 0 to 2, to work out if a jump must be taken, that is, do we set the PC register's load input?
+
+Computer
+Build and test the Computer from project 05 of the Nand2Tetris course. This requires you to edit the HDL file Computer.hdl.
+
+The following diagram shows how the Computer is wired using the CPU, Memory and the builtin ROM32K chips:
+
+Computer.png
+
+Once this chip is complete, you can try testing your computer using the programs in the Add.hack, Max.hack and Rect.hack files.
