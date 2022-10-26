@@ -1,0 +1,155 @@
+Workshop 06 - Assembly Language
+Overview
+The lowest software layer in the computer system we are building is assembly language.  The purpose of this workshop is to give you an introduction to the process of translating assembly language into machine code and to get you to try writing some short code sequences. Fortunately, you will never be asked to write complete programs in assembly language but, you are expected to be able to implement the simpler commands of the Virtual Machine language being presented in lectures.
+
+Weighting and Due Dates
+Available participation marks:
+week 6: 4 (preparation 2, activity 2)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 6
+Activity: 11:55pm Friday of week 6
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 06 Background Reading
+Before attending the workshop you should re-read chapter 6 of the text book and read the full workshop description. Then consider how you would answer the following questions:
+
+Question 01
+Look at the following Hack Assembly Language program, question01.asm, which has the equivalent Hack machine code shown in comments:
+
+// Adds 1 + ... + 100
+       @i                               // 0000000000010000
+       M=1    // i=1                    // 1110111111001000
+       @sum                             // 0000000000010001
+       M=0    // sum=0                  // 1110101010001000
+(LOOP)
+       @i                               // 0000000000010000
+       D=M    // D=i                    // 1111110000010000
+       @100                             // 0000000001100100
+       D=D-A  // D=i-100                // 1110010011010000
+       @END                             // 0000000000010010
+       D;JGT  // if (i-100)>0 goto END  // 1110001100000001
+       @i                               // 0000000000010000
+       D=M    // D=i                    // 1111110000010000
+       @sum                             // 0000000000010001
+       M=D+M  // sum=sum+i              // 1111000010001000
+       @i                               // 0000000000010000
+       M=M+1  // i=i+1                  // 1111110111001000
+       @LOOP                            // 0000000000000100
+       0;JMP  // goto LOOP              // 1110101010000111
+ (END)
+       @END                             // 0000000000010010
+       0;JMP  // infinite loop          // 1110101010000111
+Why is there no Hack machine code shown for the lines containing labels?
+
+Question 02
+Draw the symbol table for the program in question 01. Which entries are populated during the second pass? 
+
+Workshop 06 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 06 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop06 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop 06 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and commit them to svn:
+% make install
+Question 03
+Edit the file question03.txt and enter the symbol table for the program in question01.asm. Each line should contain the name of a symbol followed by its value, separated by a single space. For example, if we have a symbol xyzzy with value 13:
+
+xyzzy 13
+The symbols must be listed in lexicographic order, eg uppercase letters come before lowercase letters. Do not include the predefined symbols.
+
+Commit the changes to your svn repository:
+% svn commit -m "Workshop 06 Startup Files"
+Goto the Web Submission System and make a submission to the "Workshop 06 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 06 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 06 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+After completing each question, commit your changes to svn:
+
+% svn commit -m workshop06-activity
+After each commit, go to the Web Submission System and make a submission to the Workshop 06 assignment. This will check that the question03.txt, answer04.hack and answer05.hack files are correct and it will also assemble and run your solutions to questions 06 to 11 to see if the variables have the correct final values. A successful submission that passes the tests for questions 04, 05, and 06, will complete the workshop activity.
+
+Question 04
+Hand assemble the following program from question04.asm and place your answer in a file named answer04.hack, each line of the file should be a sequence of 16 0s or 1s:
+
+      @1023
+      D=A
+      @SCREEN
+      M=D
+(END)
+      @END
+      0;JMP
+To do this you will need to look at the tables that list the instruction formats and the predefined symbol table entries which are Figures 3 to 8 from the mock examDownload Figures 3 to 8 from the mock exam. You can check your answer by running the Hack Assembler and comparing the resulting question04.hack file with your answer04.hack file. When you have finished commit your changes to svn.
+
+Question 05
+
+and assemble the following program from question05.asm and place your answer in a file named answer05.hack, each line of the file should be a sequence of 16 0s or 1s:
+
+      @X
+      D=M
+      @Y
+      M=D+M
+(END)
+      @END
+      0;JMP
+You can check your answer by running the Hack Assembler and comparing the resulting question05.hack file with your answer05.hack file. When you have finished commit your changes to svn.
+
+Questions 06 to 11
+In the remaining questions you need to write some Hack Assembly language. In each case you must add your instructions to the end of the question's .asm file. Each of these .asm files starts with some A-instructions that reference all of the variables used in these questions. This guarantees that the variables have the addresses expected by the test scripts.
+
+To check your answers run make and it will test all of your answers. When you have finished a question, commit your changes to svn.
+
+Question 06
+Write a short sequence of Hack Assembly language to implement the following Jack code and place your answer at the end of the file named question06.asm:
+
+let x = 1;                     // initialiase x to 1
+let y = 10;                    // initialiase y to 10
+let sum = x + y;               // add them together
+Question 07
+Write a short sequence of Hack Assembly language to implement the following Jack code and place your answer at the end of the file named question07.asm:
+
+let x = 0;                    // initialiase x to 0
+let sum = 0 ;                 // initialise sum to 0
+while ( x < 10 )
+{
+        let sum = sum + x ;   // add x to sum
+        let x = x + 1 ;       // increment x
+}
+Question 08
+Write a short sequence of Hack Assembly language to implement the following Jack code and place your answer at the end of the file named question8.asm:
+
+let x = arr[y] ;
+You should assume that the variable arr records the address of the first element in the array and that all elements in the array are of size 1.
+
+Question 09
+Write a short sequence of Hack Assembly language to implement the following Jack code and place your answer at the end of the file named question09.asm:
+
+let x = 0;           // initialiase x to 0
+let sum = 0          // initialise sum to 0
+while ( x < 10 )     // add up all 10 numbers in the array numbers
+{
+        let sum = sum + numbers[x] ;
+        let x = x + 1 ;
+}
+Question 10
+Write a short sequence of Hack Assembly language to implement the following C++ expression and place your answer at the end of the file named question10.asm:
+
+x = *ptr++ ;
+You should assume that incrementing the pointer, ptr, adds 1 to its value.
+
+Question 11
+Write a short sequence of Hack Assembly language to implement the following C++ code and place your answer at the end of the file named question11.asm:
+
+let x = 0;          // initialiase x to 0
+let sum = 0         // initialise sum to 0
+while ( x < 10 )    // add up all 10 numbers in the array numbers
+{
+        let sum = sum + *numbers++ ;
+        let x = x + 1 ;
+}
