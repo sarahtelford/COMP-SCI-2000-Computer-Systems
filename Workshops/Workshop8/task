@@ -1,0 +1,83 @@
+Virtual Machine Translation (alt)
+ 
+Overview
+In Workshop 07 you attempted to translate a small subset of the VM language into Hack Assembly Language. Since the VM language is stack based, a significant number of commands need to repeatedly read the stack pointer from memory location 0 and write it back, some times more than once. The purpose of this workshop is to demonstrate how a small addition to the HACK CPU can dramatically reduce the number of instructions required and thereby simplify the translation task. In effect, we are aiming to make manipulating the stack pointer (the common case) fast. Whether or not this allows programs to run any faster is an interesting question you can think about when we discuss signal propagation and clock cycles in later lectures.
+
+Weighting and Due Dates
+Available participation marks:
+week 8: 4 (preparation 2, activity 2)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 8
+Activity: 11:55pm Friday of week 8
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 08 Background Reading
+Before attending the workshop you should review Workshop 07.
+
+Workshop 08 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 08 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop08 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop08 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and commit them to svn:
+% make install
+Goto the Web Submission System and make a submission to the "Workshop 08 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 08 Activity
+
+Notes:
+
+the activity marks are shown by the associated "Workshop 08 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+After completing the VM command implementations in each question*.vm-asm file, commit your changes to svn:
+
+% svn commit -m workshop08-activity
+After each commit, go to the Web Submission System and make a submission to the "Workshop 08 - Submit Here" assignment. A successful submission that passes the tests of question00.vm-asm, question01.vm-asm and question02.vm-asm will complete the workshop activity.
+
+CPU Additions
+To demonstrate the effect of having instructions better suited to the programs that a processor must run we will make the following changes to the Hack CPU:
+
+1. We will add a stack pointer register, S, so that the stack pointer can be manipulated without needing to read or write memory.
+
+2. We will add S-instructions that are the same as C-instructions but use the S register instead of the A register.
+
+3. When writing an S-instruction in assembly language we will use S and P instead of A and M.
+
+3. If an instruction is pushing a value onto the stack, the S register will be incremented after pushing the value.
+
+4. If an instruction is popping a value off the stack, the S register will be decremented before popping the value.
+
+5. If an instruction is both pushing and popping a value, S - 1 will be used to read / write the top of stack, the S register is not changed.
+
+Examples
+Here are examples of how push, not and add commands can be simplified, the left column just uses C-instructions, the right column uses the new S-instructions:
+
+push constant 0               push constant 0
+@SP                           P=0
+AM=M+1
+A=A-1
+M=0
+
+not                           not
+@SP                           P=!P
+A=M-1
+M=!M
+
+add                           add
+@SP                           D=P
+AM=M-1                        P=D+P
+D=M
+A=A-1
+M=D+M
+When we use P on the right hand side of an instruction, we are popping a value from the stack. In this case, S is decremented by one and then used as the memory address to read the value that is on top of the stack.
+
+When we use P on the left hand side of an instruction, we are pushing a value onto the stack. In this case, S is used as the memory address to write the new value to the top of the stack and then S is incremented by 1.
+
+When we use P on both sides of an instruction, eg in P=D+P, we are popping a value from the stack, doing some arithmetic and then pushing the result back onto the stack. In this case S - 1 is used as the address to read / write the top of the stack but the value of S is not changed.
+
+Simulator Change
+The bin/tesit script in this workshop works as it did in workshop 07 but it recognisse and simulates the S-instructions. In addition, solely for the purposes of this workshop, the bin/testit script treats any attempt to write or write memory location 0 as an error so that you cannot substitute C-instruction implementations of commands that manipulate the stack. The modified Hack CPU would not do this.
