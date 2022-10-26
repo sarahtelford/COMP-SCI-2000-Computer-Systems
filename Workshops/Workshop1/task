@@ -1,0 +1,45 @@
+Workshop 01 Preparation Task
+Notes:
+
+the preparation marks are shown by the associated "Workshop 01 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment
+in example commands % is the shell's prompt, it is not part of the command
+Log into your linux environment.
+Create directories for every assignment, workshop and exam in your svn repository, as described on the Startup Files for Workshops and Assignments page.
+Change to the workshop01 directory.
+% cd workshop01
+Copy the latest startup files from the "View Feedback" tab of the "Workshop01 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and then commit the files to svn:
+% make install
+Goto the Web Submission System and make a submission to the "Workshop 01 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity. 
+Workshop 01 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 01 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the checked out working copy of your workshop01 directory.
+Use the Hardware Simulator and the test script And.tst to test the And chip:
+% HardwareSimulator.sh And.tst
+This runs the test script on the simulator, produces an output file, And.out and compares it to a file of expected output, And.cmp. Does the And chip behave as expected?
+
+Run the make command with no arguments:
+% make
+This first checks that your startup files are up to date and then runs a script that tests all the chips using their own .tst test scripts.
+
+Edit the Not.hdl file in your preferred editor and attempt to implement the Not chip using a Nand chip. Test your Not chip.
+% make
+A .hdl file is just a text file and be edited in exactly the same way that you edited your .cpp and .h files in earlier programming courses.
+
+Edit the And.hdl file in your preferred editor and attempt to implement the And chip using a Nand chip and your Not chip. Test your And chip.
+% make
+Commit the changes to your svn repository:
+% svn commit -m workshop01-activity
+Goto the Web Submission System and make a submission to the "Workshop 01 - Submit Here" assignment. A successful submission that passes the Not chip and And chip tests will complete the workshop activity.
+Workshop 01 Project
+You are expected to know what all the chips do and how to implement them. They are the building blocks we will use to construct the Hack processor. This workshop provides an opportunity to receive an additional 5 participation marks by completing the entire workshop. If you get stuck on hdl consult the Hardware Simulator Tutorial or the HDL Survival Guide on the nand2tetris website.
+
+Notes:
+
+all submissions to the "Workshop 01 - Submit Here" assignment will receive up to 5 additional participation marks for submissions by the project due date
+the additional project marks are shown by the associated "Workshop 01 - Project" assignment
