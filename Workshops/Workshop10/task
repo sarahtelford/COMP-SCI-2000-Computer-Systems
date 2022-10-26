@@ -1,0 +1,185 @@
+Workshop 10 - Recursive Descent Parsing
+Recursive Descent Parsing
+Overview
+In this workshop you will write a recursive descent parser for a simple language. To complete the workshop you just need to complete the bodies of the parse_XXX() functions in the file parser.cpp. There is one function for each term in the grammar being parsed and the first parse function that will be called is parse_program().
+
+To simplify the task we have provided a library of useful functions that we use in most programming workshops and assignments. The library implements a tokeniser for the example language, an abstract syntax tree that can be read or written as XML, symbol tables and an output buffer. The library functions that you can use are described in the .h files in the includes sub-directory. The tokeniser functions are described in the tokeniser.h file, the abstract syntax tree functions are described in the abstract-syntax-tree.h file, the symbol tables are described in the symbols.h file and the output buffer is described in the iobuffer.h file. You may not need to use all of this functionality in this workshop.
+
+Weighting and Due Dates
+Available participation marks:
+week 10: 4 (preparation 2, activity 2)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 10
+Activity: 11:55pm Friday of week 10
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 10 Background Reading
+Before attending the workshop you should read the full workshop description, review the startup files provided and you may wish to re-read chapter 10 of the textbook.
+
+Workshop 10 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 10 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop10 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop 10 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and commit them to svn:
+% make install
+Compile the skeleton version of the parser program to be implemented in this workshop using the command:
+% make notest
+The executable program, parser, is compiled using the file parser.cpp and the precompiled library files lib/*/libcs*.a. The main function in the parser program calls parse_program() to construct a simple abstract syntax tree representing the input and then calls ast_print_as_xml() to print an XML representation of the constructed tree.
+
+Commit the changes to your svn repository:
+% svn commit -m "Workshop 10 Startup Files"
+Goto the Web Submission System and make a submission to the "Workshop 10 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 10 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 10 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+After completing each part of the following activity, commit your changes to svn:
+
+% svn commit -m workshop10-activity
+After each commit, go to the Web Submission System and make a submission to the Workshop 10 assignment. A successful submission that passes the first of the parser tests will complete the workshop activity.
+
+Part 1 - Complete the Parser
+Write a recursive descent parser for the following language.
+
+Term	 	 Definition
+program	::=	declarations statement tk_eoi
+declarations	::=	declaration*
+declaration	::=	tk_var tg_type tk_identifier tk_semi
+statement	::=	while | if | let | sequence
+while	::=	tk_while tk_lrb condition tk_rrb statement
+if	::=	tk_if tk_lrb condition tk_rrb statement (tk_else statement)?
+let	::=	tk_let tk_identifier tk_assign expression tk_semi
+sequence	::=	tk_lcb statement* tk_rcb
+expression	::=	term (tg_infix_op term)?
+condition	::=	term tg_relop term
+term	::=	tk_identifier | tk_integer
+Program Structure
+So that you do not have to worry about how to tokenise the input, we have provided a working tokeniser. The most useful tokeniser functions are, next_token(), mustbe(), have(), have_next() and did_not_find(). 
+
+next_token() calls the tokeniser and returns a new token read from the input. The token kinds can be found in the file includes/tokeniser.h. The functions token_kind(), token_spelling() and token_ivalue() can be used to inspect the contents of the returned token object. If there are any errors constructing the next token or the end of the input is reached, the returned token kind will be tk_eoi.
+
+mustbe() is used when you know what the next token must be. The function will check whether or not the next token is the expected token and if it is not, it will terminate the program by calling the function did_not_find(). If no error occurred, it will then read a new token from the input but return the matching token.
+
+have() is used when you want to know if the next token is a particular token. The function will check whether or not the next token is the expected token. If it is, the function returns true, otherwise it returns false.
+
+have_next() is similar to have() but it also calls next_token() if it is going to return true.
+
+did_not_find() is provided as means of reporting that an expected token could not be found in situations where you know what the next token must be. If called, did_not_find() will report a fatal error and terminate the parser.
+
+There are some situations where you want to check if a token is one of a number of possibilities such as a relational operator or the start of one of the statements or terms. To accommodate this, the tokeniser has several token kinds that refer to groups of tokens, tg_statement, tg_term, tg_infix_op, tg_relop and tg_type, that can be used with mustbe(), have(), have_next() and did_not_find(). The mustbe() function will advance the input if it finds a matching token but the parser may need to know which token it found. For this reason, the mustbe() function returns the token that it matched. As a naming convention in this workshop, individual tokens are named tk_* whereas token groups are named tg_*.
+
+Recursive Descent Parsing
+This is a summary of the recursive descent parsing rules from workshop 05 using tokens instead of characters:
+
+token or token group, T- the next token must be T or a token in token group T
+if the T is not the token and not a member of token group T, report not finding the T as an error and stop, otherwise read a new next token from the input,
+eg mustbe(T) ;
+R - the next part of the input is described by a rule named R
+call the function to parse the rule named R,
+eg parse_R() ;
+A? - the next part of the input may or may not be term A
+if the next token, T, can start term A, apply these rules to parse term A,
+eg if ( have(T) ) { parse term A }
+A* - the next part of the input is 0 or more repeats of term A
+while the next token, T, can start term A, apply these rules to parse term A,
+eg while ( have(T) ) { parse term A }
+A B C ... - the next part of the input must be term A, followed by term B, followed by Term C, and so on
+apply these rules to parse term A, then
+apply these rules to then parse term B, then
+apply these rules to parse term C, and so on
+A | B | C | ... - the next part of the input must be either term A, or term B, or term C, or ...
+if the next token can start term A, apply these rules to parse term A, or
+if the next token can start term B, apply these rules to parse term B, or
+if the next token can start term C, apply these rules to parse term C, or
+... or
+report not finding a token that can start term A, term B, term C, or ... as an error and stop, ie call did_not_find().
+There are a few cases where the implementation can be simplified.
+
+Rule 2: R
+If the rule named R consists of a single token or token group, T, then the every occurrence of R in the grammar can be replaced by T.
+Rule 3: A?
+If A is a token or token group, T the rules above would result in:
+     if ( have(T) ) mustbe(T) ;
+If have(T) returns true, the call of mustbe(T) cannot find an error and just calls next_token() so this case can be rewritten as:
+     if ( have(T) ) next_token() ;
+Rule 4: A*
+If A is a token or token group, T the rules above would result in:
+    while ( have(T) ) mustbe(T) ;
+If have(T) returns true, the call of mustbe(T) cannot find an error and just calls next_token() so this case can be rewritten as:
+    while ( have(T) ) next_token() ;
+
+Parsing Functions
+In a recursive descent parser we start by writing a function for each term in the programming language's grammar which is responsible for parsing that term.  In this parser, each function is also going to return an abstract syntax tree node representing what it just parsed. For example, if parsing the grammar shown above, we would start with the functions:
+
+ast parse_program() ;
+ast parse_declarations() ;
+ast parse_declaration() ;
+ast parse_statement() ;
+ast parse_while() ;
+ast parse_if() ;
+ast parse_let() ;
+ast parse_sequence() ;
+ast parse_expression() ;
+ast parse_condition() ;
+ast parse_term() ;
+To complete this workshop you need to complete the bodies of these parse functions.
+
+The main program will initialise the tokeniser and symbol tables for you, call the parseProgram() function and finally write out a representation of the abstract syntax tree that was created using XML.
+
+Example Parse Function
+To illustrate how we use the have() and mustbe() functions, here is what the parse_sequence() function could look like:
+
+// sequence: tk_lcb statement* tk_rcb
+ast parse_sequence()
+{
+        vector<ast> seq ;
+
+        mustbe(tk_lcb) ;
+        while ( have(tg_statement) )
+        {
+                seq.push_back(parse_statement()) ;
+        }
+        mustbe(tk_rcb) ;
+
+        return create_statements(seq) ;
+}
+The statementSequence rule states that a statementSequence must start with a '{' (tk_lcb), it may be followed by 0 or any number of statements and then finishes with a '}' (tk_rcb). Therefore our parse function starts with a call of mustbe(tk_lcb) so that if that is not the next token a fatal error is reported.  The input will then have moved onto the next token which should be either the start of a statement or a '}'. There is a group token tg_statement that matches any token that can start a statement so we use a call of have(tg_statement) to tell if the next token starts a statement. While the next token is the start of a statement we go around a while loop parsing statements by calling parse_statement(). When the next token cannot start a statement, the while loop terminates. If the input is correct then there must be a '}' to complete the statement sequence. Therefore the last parsing step is to call mustbe(tk_rcb) so that if that is not the next token a fatal error is reported.
+
+This example also shows the approach taken to creating abstract syntax tree nodes. In each parse function we collect the components of a tree node and only create the node as the last step. In this case, we do not know how many times we will call parse_statement() to create statements nodes, so we collect them in a vector which is finally passed to the create_statements() function.
+
+Variable Declarations
+As part of writing the parser you must construct tree nodes to represent the variables that encode their name, their type, their segment and their offset within their segment. In the simple language all variables are stored in the local segment. This can be achieved by using a symbol table to record which variables have been declared and where the variables are actually stored in the local segment. 
+
+When a new variable is declared the variable's name, type and segment are passed to the declare_variable() function. The function will automatically allocate the variable the next free memory location in the segment. In this workshop always pass "local" as the segment name. If a variable has already been declared with the same name, an error message is printed and the program will exit. Once the variable has been added to the symbol table, declare_variable() returns a tree node representation of the variable.
+
+When a variable is used in a statement or expression, the lookup_variable() function is called to find the segment name and offset where the variable is stored. If the variable has not been declared an error message is printed and the program will exit. If the variable is present in the symbol table, lookup_variable() returns a tree node representation of the variable.
+
+To setup the symbol table the main function calls the helper functions, initialise_symbol_tables(), push_symbol_table() and pop_symbol_table(). If you were writing a Jack compiler, you would call the push_symbol_table() function before parsing a class and before parsing each constructor, function or method. You would call the pop_symbol_table() function after parsing each constructor, function or method so that any arguments or local variables are not visible to any other constructor, function or method.
+
+Part 2 - Automatic Testing
+The completed parsing program reads from standard input and writes an XML representation of abstract syntax tree to standard output.  Next week, you will write a code generator that walks one of these trees and produces VM code that implements the original program.
+
+So that you can test your parser, we have provided three example programs in the tests directory in the zip file attached below. The first and third programs should parse without error, whilst the second should fail because it contains more than one statement after the declarations. You can test your parser as follows:
+
+% make
+ Test | Program  | Output | Errors | Status | Test Result | Description           
+ 1    | parser   |   F.   |   ?    |   ?    | Test Failed | while loop 
+ 2    | parser   |   F.   |   F.   |   P.   | Test Failed | syntax error 
+ 3    | parser   |   F.   |   ?    |   ?    | Test Failed | nested ifs and whiles 
+You should expect the initial version of your parser to fail all of the tests. Note that when you run the make command, make will first attempt to compile your program. If the program does not compile the tests will not be run.
+
+Part 3 - Error Handling
+If you have completed steps 1 and 2 it is instructive to consider how to report syntax errors. For example, what information goes into the error message, how do you represent the location of the error and do we attempt to continue parsing so we can identify as many syntax errors as possible?
+
+Recovering from a syntax error may not always be possible because the parser may not be able to tell what the programmer was trying to write and therefore how to correct the error. There are number options available. The easiest option is to simply give up completely so the compiler never has to handle more than one error. If the compiler writer wants to look for other errors there are two main approaches. Either pretending an expected symbol was present after all and continuing to parse the program on that basis. Alternatively, assuming that some extra input is present and simply deleting all input until the expected symbol is finally found. Many compilers adopt a combination of both.
+
+The way to implement the reporting and recovery is by writing your own version of the mustbe() function. When the first error is discovered, your mustbe() function simply reports the error and returns. This in effect, simulates inserting the missing symbol into the program and continuing as if the program was correct. The second time an error is discovered by your mustbe() function, the error is reported but, before it returns, your mustbe() function reads and discards tokens until either it finds the expected token or the end of the input.
+
+For this step, write your own mustbe() function so that it can recover from syntax errors as just described. If you now give your parser an incorrect program, what error messages would help you as a programmer work out what your mistakes were? You may need to use a different name for your mustbe() function and edit your parser.cpp file to use the new name throughout.
