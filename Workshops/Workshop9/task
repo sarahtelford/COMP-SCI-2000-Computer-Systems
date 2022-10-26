@@ -1,0 +1,195 @@
+Workshop 09 - Programming in Jack
+ Programming in Jack
+Overview
+The remainder of the course focusses on the techniques required to take a high level language such as Jack, and compile it into Hack Virtual Machine Language so that is can be run on the Hack computer. The purpose of this workshop is to give some exposure to the Jack language by getting you to write a few small programs.
+
+Important: you must use our version of the nand2tetris tools for this workshop: csadelaide-nand2tetris.zip.
+
+Weighting and Due Dates
+Available participation marks:
+week 9: 4 (preparation 2, activity 2)
+Due Dates:
+Preparation: 11:55pm Tuesday of week 9
+Activity: 11:55pm Friday of week 9
+Late penalties: All late submissions receive 0 marks.
+Core Body of Knowledge (CBOK)  Areas: abstraction, design, hardware and software, data and information, and programming.
+See the Assessment of Workshops page for more details.
+Workshop 09 Background Reading
+Before attending the workshop you should read chapter 9 of the text book.
+
+Workshop 09 Preparation Activity
+Notes:
+
+the preparation marks are shown by the associated "Workshop 09 - Preparation" assignment
+the steps below assume that you are using a correctly setup Linux environment and that you have created the directories as described on the Startup Files for Workshops and Assignments page
+in example commands % is the shell's prompt, it is not part of the command
+Change directory to the working copy of the workshop09 directory.
+Copy the latest startup files from the "View Feedback" tab of the "Workshop 09 - Submit Here" assignment into the updates sub-directory. Do not unzip the file.
+Run the following command to place the workshop's startup files in the correct locations, this should automatically add the correct files to svn and commit them to svn:
+% make install
+Each Jack program needs its own directory that contains .jack files, one for each class in the Jack program. For the purposes of this workshop, two extra files have been provided, runMain.tst and runAll.tst.
+Each class in a Jack program must have a file that starts with the class name and is suffixed by .jack. The Jack compiler will check that the file and class names match. At least one of the classes must be called Main and contain a function called main().
+We are going to create a hello world program consisting of a single class so edit the file HelloWorld/Main.jack and insert the following:
+// Hello world
+class Main
+{
+        function void main()
+        {
+                do Unix.printString("Hello World!") ;
+                do Unix.println() ;
+                return ;
+        }
+}
+Once you have written a class, you can use the command JackCompiler.sh to compile the .jack file and create a matching .vm file containing Hack Virtual Machine Language:
+% JackCompiler.sh HelloWorld
+Compiling /project/workshop09/HelloWorld
+Running Jack Programs on the Command Line
+To run our compiled program we need to use the VMEmulator and a test script. The test scripts are placed in every program sub-directory by the startup files. The first, runMain.tst, only loads the Main.vm file whilst the second, runAll.tst, will load every .vm file in your directory. In both cases the test script will automatically load any missing Jack OS classes and the program will run until it chooses to exit.
+
+To run the hello world program you can use the command:
+
+% VMEmulator.sh HelloWorld/runMain.tst
+Hello World!
+Program Halted: Main.main finished execution
+To run a program that consists of several .vm files, you use the other test script. eg:
+
+% VMEmulator.sh HelloWorld/runAll.tst
+Hello World!
+Program Halted: Main.main finished execution
+The Jack OS only provides input and output using the GUI's keyboard and screen which is not helpful if you want to run a test script over a Jack program. To overcome this, you can access standard input and output using our Unix class which is described below. This is what the hello world program is doing.
+
+Running Jack Programs in the GUI *this is not needed in this workshop*
+If you really want to use a GUI to run your program, run VMEmulator.sh with no command line arguments and use the "Load Program" entry in the file menu to choose the Main.vm file. If the directory does not contain all the Jack OS classes used by your program, the VMEmulator will ask if it can substitute any missing classes with its own builtin classes. There is a builtin class for each of the Jack OS class. Once loaded you can run the program from within the VMEmulator GUI.
+
+If your program consists of more than one class, you need to choose the directory containing the program rather than the Main.vm file. When using the "Load Program" entry in the file menu, go to the parent of the directory containing your program, select the program directory, then click the "Load Program" button. This will load every .vm file in your directory on the assumption that it is part of your program. Do not have classes from more than one Jack program in the same directory.
+
+If you try this with our HelloWorld program, the output "Hello World!" will still appear where it did before because the program is not using the keyboard or screen simulated by the GUI. In this workshop, running programs through the GUI will slow you down, in most cases run make and it will compile and test all your programs on one go. However, you may find the GUI helpful in studying how the virtual machine works.
+Goto the Web Submission System and make a submission to the "Workshop 09 - Submit Here" assignment. A successful submission that passes the preparation tests will complete the preparation activity.
+Workshop 09 Activity
+Notes:
+
+the activity marks are shown by the associated "Workshop 09 - Activity" assignment
+the steps below assume that you have completed the preparation task
+in example commands % is the shell's prompt, it is not part of the command
+After completing each program in the following activity, commit your changes to svn:
+
+% svn commit -m workshop09-activity
+After each commit, go to the Web Submission System and make a submission to the Workshop 09 assignment. A successful submission that passes the tests for the Sum and Average programs will complete the workshop activity.
+
+Program 1 - Sum
+Write, compile and run a Jack program to prompt for and read in two numbers and print out their sum. The program must be placed in the sub-directory named Sum. The program must use the Unix class for all input and output, it should not produce any output except the result followed by a newline.
+
+Program 2 - Average
+Write, compile and run a Jack program to read in a series of numbers and print out their average. You will need to use the DP class for some of the arithmetic. The program must be placed in the sub-directory named Average. The program must use the Unix class for all input and output, it should not produce any output except the result followed by a newline. The program should stop reading input when it reads a 0. The 0 is ignored. You may assume that there will be at least one number entered before the 0.
+
+Program 3 - Average and Standard Deviation
+Write, compile and run a Jack program to read in a series of integers, store them and print out the sample standard deviation. You will need to use the DP class for some of the arithmetic. The program must be placed in the sub-directory named SDev. The program must use the Unix class for all input and output, it should not produce any output except the result followed by a newline. The program should stop reading input when it reads a 0. The 0 is ignored. You may assume that there will be at least two numbers entered before the 0.
+
+You have a couple of options for storing the numbers. You could use an Array that is big enough, in which case your program will all fit within the Main class and you can run it using either runMain.tst or runAll.tst. Alternatively, you could use a List class that implements a linked list. If you take this approach the program will consist of two classes, Main, in the file Main.jack, and List, in the file List.jack, it will only run using runAll.tst and you must add List.jack to your svn repository.
+
+If you choose the linked list option you can use the following implementation for the List class or you can write your own:
+
+/** The List class provides a linked list abstraction */
+/* This linked list represents an empty list with the value null */
+class List
+{
+    field int head ;
+    field List tail ;
+
+    /* Creates a new list object */
+    constructor List cons(int _head,List _tail)
+    {
+        let head = _head ;
+        let tail = _tail ;
+        return this ;
+    }
+
+    /* get the head of a List object */
+    method int getHead()
+    {
+        return head ;
+    }
+
+    /* get the tail of a List object */
+    method List getTail()
+    {
+        return tail ;
+    }
+}
+This is an example of how you could add the numbers 2, 3 and 5 to the linked list and then traverse the list:
+
+/** an example function that adds 2, 3 and 5 to a list then prints them out */
+function void useful()
+{
+    List list ;            // a variable to point at the start of our list
+    List next ;           // a variable to use while traversing our list
+
+    // add the numbers 2, 3, 5 to the list
+    let list = List.cons(2, list) ;
+    let list = List.cons(4, list) ;
+    let list = List.cons(5, list) ;
+
+     // write out the contents of our list
+    let next = list ;
+    while ( ~(next = null) )
+    {
+        do Unix.printInt(next.getHead()) ;
+        do Unix.println() ;
+        let next = next.getTail() ;
+    }
+}
+Extended Jack OS
+In order to enable I/O when running Jack programs on the command line and to support some useful arithmetic operations, we have provided two extra classes for the Jack OS, Unix and DP. These are already installed in the CAT suite Linux image and in the course's version of the nand2tetris software tools in the zip file attached to our Nand2Tetris Resources page.
+
+Unix
+This class provides basic I/O functions that allow reading/writing of standard input/output and error. 
+
+Standard Input
+public static int readChar(): reads a character from standard input, it returns -1 on I/O errors.
+public static String readLine(String message): writes the message to standard output, then reads a line from standard input
+public static int readInt(String message): writes the message to standard output, then reads a line from standard input and converts it to an int.
+Standard Output
+function void printChar(char c): writes the character c to standard output.
+function void printString(String s): writes the String s to standard output.
+function void backSpace(): writes a backspace character to standard output.
+function void printInt(int i): writes a newline character to standard output.
+function void println(): writes a newline character to standard output.
+Standard Error
+function void printCharErr(char c): writes the character c to standard error.
+function void printStringErr(String s): writes the String s to standard error.
+function void backSpaceErr(): writes a backspace character to standard error.
+function void printIntErr(int i): writes a newline character to standard error.
+function void printlnErr(): writes a newline character to standard error.
+Useful Extras
+function String strcpy(String s): this returns a copy of the string s.
+function int strcmp(String s1, String s2): this returns -1 if s1 < s2, or 0 if s1 == s2, or 1 of s1 > s2.
+function void exit(int exit_status): the process exits with the specified exit status.
+DP
+This class provides double precision, DP, floating point arithmetic functions A DP object is an array of 4 integers in order to achieve a 64-bit representation of the DP floating point number.
+
+Creating / Deleting DP Objects
+constructor DP new(int i): constructs a new DP object and initialises it with the value i.
+method void dispose(): frees the memory allocated to this DP object.
+Copy, Parse, E and PI
+function void assign(DP L, DP R): copies the value of R into object L.
+function void parse(DP d, String s): parses the number in String s and copies its value into object d.
+function String toString(DP d): returns a string representation of object d's number.
+function void E(DP d): copies the mathematical value E into object d.
+function void PI(DP d): copies the mathematical value PI into object d.
+Comparisons
+function boolean lt(DP L, DP R): returns true if this object L's value is less than R's value.
+function boolean lteq(DP L, DP R): returns true if this object L's value is less than or equal to R's value.
+function boolean eq(DP L, DP R): returns true if this object L's value is equal to R's value.
+Basic Arithmetic
+function void add(DP a,DP b, DP c): copies the result of b + c into object a.
+function void subtract(DP a, DP b, DP c): copies the result of b - c into object a.
+function void multiply(DP a, DP b, DP c): copies the result of b * c into object a.
+function void divide(DP a, DP b, DP c): copies the result of b / c into object a.
+function void neg(DP a, DP b): copies the result of -b into object a.
+Java Math.* Functions
+function void abs(DP a, DP b): copies the absolute value of b into object a.
+function void sqrt(DP a, DP b): copies the square root of b into object a.
+function void log10(DP a, DP b): copies the base 10 logarithm of b into object a.
+function void log(DP a, DP b): copies the natural logarithm of b into object a.
+function void exp(DP a, DP b): copies the result of E raised to the power b into object a.
+function void power(DP a, DP b, DP c): copies the result of b raised to the power c into object a.
